@@ -10,7 +10,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 RUN rustc --version
 
 # Copy python dependencies (including ansible) to be installed using Pipenv
-COPY Pipfile* ./
+COPY requirements.txt ./
 # Instruct pip(env) not to keep a cache of installed packages,
 # to install into the global site-packages and
 # to clear the pipenv cache as well
@@ -22,14 +22,9 @@ ENV PIP_NO_CACHE_DIR=1 \
 # pip3~=21.1 fixes a vulnerability described in https://github.com/pypa/pip/pull/9827.
 RUN set -e && yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
-  && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip python38-setuptools \
-  && pip3 install --upgrade pip~=23.0.1 \
-  && pip3 install pipenv==2023.2.18 \
-  && pipenv install --deploy \
-  && pipenv check  -i 42926 -i 42923 -i 45114 \
-  && yum remove -y gcc libffi-devel openssl-devel python38-devel \
-  && yum clean all \
-  && rm -rf /var/cache/yum
+  && yum install -y libffi-devel openssl-devel python38-devel gcc python38-pip \
+  && pip3 install --upgrade --force-reinstall pip setuptools \
+  && pip3 install -r requirements.txt
 
 FROM registry.access.redhat.com/ubi8/ubi:8.7
 ARG TARGETARCH
@@ -46,9 +41,8 @@ RUN mkdir -p /etc/ansible \
 
 RUN set -e && yum clean all && rm -rf /var/cache/yum/* \
   && yum update -y \
-  && yum install -y python38-pip python38-setuptools \
-  && pip3 install --upgrade pip~=23.0.1 \
-  && pip3 install pipenv==2023.2.18 \
+  && yum install -y python38-pip \
+  && pip3 install --upgrade --force-reinstall pip setuptools \
   && yum clean all \
   && rm -rf /var/cache/yum
 
